@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
+
+async function fileToDataUrl(file: File): Promise<string> {
+  const bytes = await file.arrayBuffer()
+  const base64 = Buffer.from(bytes).toString('base64')
+  return `data:${file.type};base64,${base64}`
+}
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -58,19 +62,9 @@ export async function POST(req: NextRequest) {
       fournisseurIfu = formData.get('fournisseurIfu') as string || undefined
       justificatifType = formData.get('justificatifType') as string || undefined
 
-      // Gestion upload fichier
       const file = formData.get('justificatif') as File | null
       if (file && file.size > 0) {
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'justificatifs')
-        await mkdir(uploadDir, { recursive: true })
-
-        const ext = file.name.split('.').pop() || 'bin'
-        const filename = `${user.id}-${Date.now()}.${ext}`
-        const filepath = path.join(uploadDir, filename)
-
-        const bytes = await file.arrayBuffer()
-        await writeFile(filepath, Buffer.from(bytes))
-        justificatifUrl = `/uploads/justificatifs/${filename}`
+        justificatifUrl = await fileToDataUrl(file)
       }
     } else {
       const body = await req.json()
@@ -89,9 +83,8 @@ export async function POST(req: NextRequest) {
     }
 
     const montantNum = parseFloat(montant)
-    const montantXof = montantNum // En MVP, on considère tout en XOF
+    const montantXof = montantNum
 
-    // Auto-validation pour certaines catégories
     const autoValidees = ['PUB_META', 'PUB_GOOGLE', 'ABONNEMENT_OUTIL']
     const statutValidation = autoValidees.includes(categorie) ? 'AUTO_VALIDEE' : 'EN_ATTENTE'
 

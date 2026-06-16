@@ -2,8 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
-import { writeFile, mkdir } from 'fs/promises'
-import path from 'path'
+
+async function fileToDataUrl(file: File): Promise<string> {
+  const bytes = await file.arrayBuffer()
+  const base64 = Buffer.from(bytes).toString('base64')
+  return `data:${file.type};base64,${base64}`
+}
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -12,7 +16,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const user = session.user as any
 
   try {
-    const existing = await prisma.depense.findUnique({ where: { id: id } })
+    const existing = await prisma.depense.findUnique({ where: { id } })
     if (!existing) return NextResponse.json({ error: 'Dépense introuvable' }, { status: 404 })
     if (existing.operateurId !== user.id) return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
 
@@ -38,12 +42,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
       const file = formData.get('justificatif') as File | null
       if (file && file.size > 0) {
-        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'justificatifs')
-        await mkdir(uploadDir, { recursive: true })
-        const ext = file.name.split('.').pop() || 'bin'
-        const filename = `${user.id}-${Date.now()}.${ext}`
-        await writeFile(path.join(uploadDir, filename), Buffer.from(await file.arrayBuffer()))
-        justificatifUrl = `/uploads/justificatifs/${filename}`
+        justificatifUrl = await fileToDataUrl(file)
       }
     } else {
       const body = await req.json()
@@ -61,7 +60,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     const statutValidation = (categorie && autoValidees.includes(categorie)) ? 'AUTO_VALIDEE' : 'EN_ATTENTE'
 
     const updated = await prisma.depense.update({
-      where: { id: id },
+      where: { id },
       data: {
         dateDepense: dateDepense ? new Date(dateDepense) : existing.dateDepense,
         categorie: (categorie || existing.categorie) as any,
