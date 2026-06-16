@@ -88,7 +88,7 @@ export async function GET(
     const lignes = facture.lignes as Array<{ description: string; quantite: number; prixUnitaire: number; total?: number }>
 
     // Générer QR code
-    const qrData = `SNAEN-FACTURE:${facture.numero}:${formatFCFA(montantTTC)}:${facture.dateEmission.toISOString().slice(0, 10)}`
+    const qrData = `${process.env.NEXTAUTH_URL}/verifier/${facture.numero}`
     const qrDataUri = await QRCode.toDataURL(qrData, { width: 140, margin: 1 })
 
     const doc = React.createElement(
@@ -192,7 +192,7 @@ export async function GET(
           React.createElement(View, { style: styles.qrInfo },
             React.createElement(Text, { style: styles.qrLabel }, 'Code de vérification QR'),
             React.createElement(Text, { style: styles.qrValue }, `Facture ${facture.numero}`),
-            React.createElement(Text, { style: styles.qrLabel }, 'Scannez ce code pour vérifier l\'authenticité de cette facture sur la plateforme SNAEN.'),
+            React.createElement(Text, { style: styles.qrLabel }, 'Scannez pour vérifier sur snaen-dnen.bj'),
             facture.statut === 'PAYEE'
               ? React.createElement(View, { style: styles.badge }, React.createElement(Text, {}, 'PAYÉE'))
               : null,

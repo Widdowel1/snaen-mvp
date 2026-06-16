@@ -1,5 +1,79 @@
 import Link from 'next/link'
 
+const steps = [
+  {
+    num: 1,
+    icon: '📝',
+    titre: 'Inscription',
+    desc: "Créez votre compte avec votre email, numéro IFU et informations d'activité. 5 minutes.",
+    badge: 'Gratuit',
+    badgeColor: 'bg-[#006B3F] text-white',
+  },
+  {
+    num: 2,
+    icon: '📱',
+    titre: 'Vérification OTP',
+    desc: "Confirmez votre identité par code SMS ou email. Votre compte est activé immédiatement.",
+    badge: 'Automatique',
+    badgeColor: 'bg-[#FCD116] text-[#004D2C]',
+  },
+  {
+    num: 3,
+    icon: '🏛️',
+    titre: 'Attribution de la LAN',
+    desc: "La DNEN vous attribue votre Licence d'Activité Numérique (LAN) sous 48h.",
+    badge: '48h',
+    badgeColor: 'bg-[#004D2C] text-white',
+  },
+  {
+    num: 4,
+    icon: '🧾',
+    titre: 'Émission de factures',
+    desc: "Créez vos factures normalisées directement sur SNAEN. QR code d'authenticité inclus.",
+    badge: 'Certifié DGI',
+    badgeColor: 'bg-blue-600 text-white',
+  },
+  {
+    num: 5,
+    icon: '📊',
+    titre: 'Déclaration fiscale',
+    desc: "Le système calcule automatiquement votre impôt selon votre régime et niveau.",
+    badge: 'Auto-calculé',
+    badgeColor: 'bg-purple-600 text-white',
+  },
+  {
+    num: 6,
+    icon: '✅',
+    titre: 'Paiement & Attestation',
+    desc: "Payez via Mobile Money (MTN, Moov, Celtiis). Téléchargez votre attestation sécurisée.",
+    badge: 'Sécurisé SHA-256',
+    badgeColor: 'bg-[#E8112D] text-white',
+  },
+]
+
+const pourquois = [
+  {
+    icon: '🔐',
+    titre: 'Anti-falsification',
+    desc: 'QR code + hash SHA-256 sur chaque document émis depuis la plateforme.',
+  },
+  {
+    icon: '📱',
+    titre: '100% Mobile',
+    desc: 'Optimisé pour iPhone et Android, réseaux 3G. Aucune installation requise.',
+  },
+  {
+    icon: '🏛️',
+    titre: 'Intégration DGI',
+    desc: "Données partagées automatiquement avec la Direction Générale des Impôts.",
+  },
+  {
+    icon: '🌍',
+    titre: 'Vision 2045',
+    desc: "Contribue au programme Bénin Révélé de développement numérique national.",
+  },
+]
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
@@ -95,8 +169,101 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 3 blocs fonctionnels */}
+      {/* Section Comment ça marche — Procédure A-Z */}
       <section className="py-16 px-6 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-center text-[#004D2C] font-bold text-2xl mb-3">
+            Comment ça marche ?
+          </h2>
+          <p className="text-center text-gray-500 text-sm mb-12 max-w-xl mx-auto">
+            Procédure d&apos;enregistrement de A à Z — de votre inscription à l&apos;obtention de votre attestation fiscale
+          </p>
+
+          {/* Timeline desktop (horizontal) / mobile (vertical) */}
+          {/* Mobile: vertical stack */}
+          <div className="flex flex-col gap-0 md:hidden">
+            {steps.map((step, i) => (
+              <div key={step.num} className="flex gap-4">
+                {/* Ligne + cercle */}
+                <div className="flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-full bg-[#004D2C] text-white flex items-center justify-center font-black text-sm flex-shrink-0 shadow-md">
+                    {step.num}
+                  </div>
+                  {i < steps.length - 1 && (
+                    <div className="w-0.5 bg-[#006B3F]/20 flex-1 min-h-[2rem] my-1" />
+                  )}
+                </div>
+                {/* Card */}
+                <div className={`mb-4 flex-1 bg-[#E8F5EE] border border-[#006B3F]/15 rounded-2xl p-4 ${i < steps.length - 1 ? 'mb-2' : ''}`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xl">{step.icon}</span>
+                    <span className="font-bold text-[#004D2C] text-sm">{step.titre}</span>
+                    <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full ${step.badgeColor}`}>
+                      {step.badge}
+                    </span>
+                  </div>
+                  <p className="text-gray-500 text-xs leading-relaxed">{step.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: horizontal timeline */}
+          <div className="hidden md:block">
+            {/* Row 1: steps 1-3 */}
+            <div className="relative flex gap-4 mb-8">
+              {steps.slice(0, 3).map((step, i) => (
+                <div key={step.num} className="flex-1 flex flex-col items-center relative">
+                  {/* connector line */}
+                  {i < 2 && (
+                    <div className="absolute top-5 left-1/2 w-full h-0.5 bg-[#006B3F]/20" style={{ zIndex: 0 }} />
+                  )}
+                  <div className="w-10 h-10 rounded-full bg-[#004D2C] text-white flex items-center justify-center font-black text-sm shadow-md relative z-10">
+                    {step.num}
+                  </div>
+                  <div className="mt-4 bg-[#E8F5EE] border border-[#006B3F]/15 rounded-2xl p-4 w-full">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xl">{step.icon}</span>
+                      <span className="font-bold text-[#004D2C] text-sm">{step.titre}</span>
+                    </div>
+                    <p className="text-gray-500 text-xs leading-relaxed mb-2">{step.desc}</p>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${step.badgeColor}`}>
+                      {step.badge}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Row 2: steps 4-6 */}
+            <div className="relative flex gap-4">
+              {steps.slice(3).map((step, i) => (
+                <div key={step.num} className="flex-1 flex flex-col items-center relative">
+                  {i < 2 && (
+                    <div className="absolute top-5 left-1/2 w-full h-0.5 bg-[#006B3F]/20" style={{ zIndex: 0 }} />
+                  )}
+                  <div className="w-10 h-10 rounded-full bg-[#004D2C] text-white flex items-center justify-center font-black text-sm shadow-md relative z-10">
+                    {step.num}
+                  </div>
+                  <div className="mt-4 bg-[#E8F5EE] border border-[#006B3F]/15 rounded-2xl p-4 w-full">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xl">{step.icon}</span>
+                      <span className="font-bold text-[#004D2C] text-sm">{step.titre}</span>
+                    </div>
+                    <p className="text-gray-500 text-xs leading-relaxed mb-2">{step.desc}</p>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${step.badgeColor}`}>
+                      {step.badge}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3 blocs fonctionnels */}
+      <section className="py-16 px-6 bg-[#E8F5EE]">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-center text-[#004D2C] font-bold text-2xl mb-3">
             Une plateforme pour tous les acteurs
@@ -110,7 +277,7 @@ export default function LandingPage() {
                 icon: '🧑‍💼',
                 title: 'Pour les opérateurs numériques',
                 color: 'border-[#006B3F]',
-                bg: 'bg-[#E8F5EE]',
+                bg: 'bg-white',
                 items: [
                   'Gestion de votre LAN (Licence Annuelle Numérique)',
                   'Émission de factures normalisées DGI',
@@ -157,6 +324,27 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pourquoi SNAEN ? */}
+      <section className="py-16 px-6 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-center text-[#004D2C] font-bold text-2xl mb-3">
+            Pourquoi SNAEN ?
+          </h2>
+          <p className="text-center text-gray-500 text-sm mb-12 max-w-xl mx-auto">
+            Une plateforme conçue pour la réalité béninoise — mobile, sécurisée, officielle.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {pourquois.map((p, i) => (
+              <div key={i} className="bg-[#E8F5EE] border border-[#006B3F]/15 rounded-2xl p-6 text-center">
+                <div className="text-4xl mb-3">{p.icon}</div>
+                <h3 className="text-[#004D2C] font-bold text-sm mb-2">{p.titre}</h3>
+                <p className="text-gray-500 text-xs leading-relaxed">{p.desc}</p>
               </div>
             ))}
           </div>

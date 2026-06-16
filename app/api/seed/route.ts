@@ -112,7 +112,7 @@ export async function GET(req: NextRequest) {
       })
     }
 
-    // Formations
+    // Formations existantes
     const formations = [
       { id: 'form-001', titre: 'Introduction au Dropshipping au Bénin', niveauMin: 'STARTER', dureeMin: 120, format: 'Vidéo + Quiz', gratuit: true },
       { id: 'form-002', titre: 'Fiscalité numérique — Comprendre votre LAN', niveauMin: 'STARTER', dureeMin: 60, format: 'Vidéo', gratuit: true },
@@ -125,6 +125,80 @@ export async function GET(req: NextRequest) {
         where: { id: f.id }, update: {},
         create: { id: f.id, titre: f.titre, niveauMin: f.niveauMin as any, dureeMin: f.dureeMin, format: f.format, gratuit: f.gratuit, secteurs: ['DROPSHIPPING'] },
       })
+    }
+
+    // Nouvelles formations enrichies (upsert par titre)
+    const nouvellesFormations = [
+      {
+        titre: "Introduction à la Licence d'Activité Numérique (LAN)",
+        description: "Comprendre les obligations légales d'un opérateur numérique au Bénin selon la loi 2018-20.",
+        format: 'video',
+        dureeMin: 25,
+        niveauMin: 'STARTER',
+        gratuit: true,
+        actif: true,
+      },
+      {
+        titre: 'Émettre une facture normalisée conforme DGI',
+        description: "Guide pratique pour créer des factures valides, respectant les normes de la Direction Générale des Impôts.",
+        format: 'pdf',
+        dureeMin: 15,
+        niveauMin: 'STARTER',
+        gratuit: true,
+        actif: true,
+      },
+      {
+        titre: 'Gérer ses dépenses déductibles fiscalement',
+        description: "Quelles dépenses sont déductibles ? Comment les justifier ? Optimisez votre base imposable.",
+        format: 'video',
+        dureeMin: 30,
+        niveauMin: 'STARTER',
+        gratuit: true,
+        actif: true,
+      },
+      {
+        titre: 'Comprendre le régime fiscal des opérateurs numériques',
+        description: "Bénéfice réel vs forfait sectoriel : comment est calculé votre impôt selon la loi béninoise.",
+        format: 'pdf',
+        dureeMin: 20,
+        niveauMin: 'BUILDER',
+        gratuit: true,
+        actif: true,
+      },
+      {
+        titre: 'Stratégies de croissance pour opérateurs numériques',
+        description: "Comment passer du niveau Starter à Builder et bénéficier d'une réduction fiscale de 30%.",
+        format: 'video',
+        dureeMin: 45,
+        niveauMin: 'BUILDER',
+        gratuit: false,
+        actif: true,
+      },
+      {
+        titre: 'E-commerce au Bénin : opportunités et conformité',
+        description: "Développer son activité e-commerce en conformité avec la réglementation béninoise.",
+        format: 'live',
+        dureeMin: 60,
+        niveauMin: 'ACHIEVER',
+        gratuit: false,
+        actif: true,
+      },
+    ]
+    for (const nf of nouvellesFormations) {
+      const existing = await prisma.formation.findFirst({ where: { titre: nf.titre } })
+      if (!existing) {
+        await prisma.formation.create({
+          data: {
+            titre: nf.titre,
+            description: nf.description,
+            format: nf.format,
+            dureeMin: nf.dureeMin,
+            niveauMin: nf.niveauMin as any,
+            gratuit: nf.gratuit,
+            actif: nf.actif,
+          },
+        })
+      }
     }
     await prisma.progressionFormation.upsert({
       where: { id: 'prog-001' }, update: {},
