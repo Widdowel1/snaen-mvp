@@ -123,6 +123,7 @@ export default function FacturesPage() {
                 <th className="px-6 py-3 font-medium">Statut</th>
                 <th className="px-6 py-3 font-medium">Date émission</th>
                 <th className="px-6 py-3 font-medium">Échéance</th>
+                <th className="px-6 py-3 font-medium">PDF</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -138,6 +139,19 @@ export default function FacturesPage() {
                   <td className="px-6 py-4 text-sm text-gray-500">{new Date(f.dateEmission).toLocaleDateString('fr-FR')}</td>
                   <td className="px-6 py-4 text-sm text-gray-400">
                     {f.dateEcheance ? new Date(f.dateEcheance).toLocaleDateString('fr-FR') : '—'}
+                  </td>
+                  <td className="px-6 py-4">
+                    <a
+                      href={`/api/factures/${f.id}/pdf`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 bg-[#E8F5EE] hover:bg-[#006B3F] text-[#006B3F] hover:text-white border border-[#006B3F]/30 hover:border-[#006B3F] rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      PDF
+                    </a>
                   </td>
                 </tr>
               ))}

@@ -23,6 +23,7 @@ export default function FiscalPage() {
   const [modePaiement, setModePaiement] = useState('')
   const [paying, setPaying] = useState(false)
   const [payResult, setPayResult] = useState<string | null>(null)
+  const [paidDeclarationId, setPaidDeclarationId] = useState<string | null>(null)
 
   async function fetchFiscal() {
     setLoading(true)
@@ -52,8 +53,8 @@ export default function FiscalPage() {
       const d = await res.json()
       if (d.success) {
         setPayResult(d.message + ' · Réf: ' + d.reference)
+        setPaidDeclarationId(d.declarationId || null)
         fetchFiscal()
-        setTimeout(() => { setShowModal(false); setPayResult(null); setModePaiement('') }, 3000)
       }
     } catch {
       setPayResult('Erreur lors du paiement simulé.')
@@ -181,11 +182,30 @@ export default function FiscalPage() {
             </div>
 
             {payResult ? (
-              <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 text-sm text-center">
-                <svg className="w-6 h-6 mx-auto mb-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                {payResult}
+              <div className="space-y-3">
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 text-sm text-center">
+                  <svg className="w-6 h-6 mx-auto mb-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  {payResult}
+                </div>
+                {paidDeclarationId && (
+                  <a
+                    href={`/api/fiscal/attestation/${paidDeclarationId}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full bg-[#004D2C] hover:bg-[#006B3F] text-white font-semibold rounded-xl py-2.5 text-sm transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Télécharger l&apos;attestation fiscale
+                  </a>
+                )}
+                <button onClick={() => { setShowModal(false); setPayResult(null); setModePaiement(''); setPaidDeclarationId(null) }}
+                  className="w-full text-gray-400 text-sm hover:text-gray-600 hover:underline">
+                  Fermer
+                </button>
               </div>
             ) : (
               <>

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
+import { writeFile, mkdir } from 'fs/promises'
+import path from 'path'
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -33,8 +35,54 @@ export async function POST(req: NextRequest) {
   const user = session.user as any
 
   try {
-    const body = await req.json()
-    const { dateDepense, categorie, description, montant, devise, fournisseurNom, fournisseurIfu, justificatifType } = body
+    let dateDepense: string
+    let categorie: string
+    let description: string | undefined
+    let montant: string
+    let devise: string | undefined
+    let fournisseurNom: string | undefined
+    let fournisseurIfu: string | undefined
+    let justificatifType: string | undefined
+    let justificatifUrl: string | undefined
+
+    const contentType = req.headers.get('content-type') || ''
+
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await req.formData()
+      dateDepense = formData.get('dateDepense') as string
+      categorie = formData.get('categorie') as string
+      description = formData.get('description') as string || undefined
+      montant = formData.get('montant') as string
+      devise = formData.get('devise') as string || undefined
+      fournisseurNom = formData.get('fournisseurNom') as string || undefined
+      fournisseurIfu = formData.get('fournisseurIfu') as string || undefined
+      justificatifType = formData.get('justificatifType') as string || undefined
+
+      // Gestion upload fichier
+      const file = formData.get('justificatif') as File | null
+      if (file && file.size > 0) {
+        const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'justificatifs')
+        await mkdir(uploadDir, { recursive: true })
+
+        const ext = file.name.split('.').pop() || 'bin'
+        const filename = `${user.id}-${Date.now()}.${ext}`
+        const filepath = path.join(uploadDir, filename)
+
+        const bytes = await file.arrayBuffer()
+        await writeFile(filepath, Buffer.from(bytes))
+        justificatifUrl = `/uploads/justificatifs/${filename}`
+      }
+    } else {
+      const body = await req.json()
+      dateDepense = body.dateDepense
+      categorie = body.categorie
+      description = body.description
+      montant = body.montant
+      devise = body.devise
+      fournisseurNom = body.fournisseurNom
+      fournisseurIfu = body.fournisseurIfu
+      justificatifType = body.justificatifType
+    }
 
     if (!dateDepense || !categorie || !montant) {
       return NextResponse.json({ error: 'Champs obligatoires manquants.' }, { status: 400 })
@@ -51,15 +99,16 @@ export async function POST(req: NextRequest) {
       data: {
         operateurId: user.id,
         dateDepense: new Date(dateDepense),
-        categorie,
+        categorie: categorie as any,
         description: description || null,
         montant: montantNum,
         montantXof,
         devise: devise || 'XOF',
         fournisseurNom: fournisseurNom || null,
         fournisseurIfu: fournisseurIfu || null,
-        justificatifType: justificatifType || null,
-        statutValidation,
+        justificatifType: (justificatifType || null) as any,
+        justificatifUrl: justificatifUrl || null,
+        statutValidation: statutValidation as any,
       },
     })
 

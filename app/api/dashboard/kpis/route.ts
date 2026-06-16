@@ -90,6 +90,13 @@ export async function GET(req: NextRequest) {
       take: 5,
     })
 
+    // Counts globaux
+    const [totalFactures, totalDeclarations] = await Promise.all([
+      prisma.facture.count({ where: { operateurId } }),
+      prisma.declarationFiscale.count({ where: { operateurId } }),
+    ])
+    const totalDepensesCount = await prisma.depense.count({ where: { operateurId } })
+
     // Alertes
     const alertes = []
     const declarationsEnRetard = await prisma.declarationFiscale.findMany({
@@ -102,9 +109,13 @@ export async function GET(req: NextRequest) {
       alertes.push({ type: 'info', message: 'Aucune facture émise ce mois-ci' })
     }
 
+    // Si aucune donnée ce mois-ci, utiliser les données du mois précédent pour avoir quelque chose à afficher
+    const caMoisAffiche = caMoisCourant > 0 ? caMoisCourant : caMoisPrecedent
+
     return NextResponse.json({
       caMoisCourant,
       caMoisPrecedent,
+      caMoisAffiche,
       variationCA: caMoisPrecedent > 0 ? ((caMoisCourant - caMoisPrecedent) / caMoisPrecedent) * 100 : 0,
       beneficeNet: fiscal.beneficeNet,
       regime: fiscal.regime,
@@ -114,6 +125,9 @@ export async function GET(req: NextRequest) {
       reductionNiveau: fiscal.reductionNiveau,
       niveau,
       ca6mois,
+      totalFactures,
+      totalDepenses: totalDepensesCount,
+      totalDeclarations,
       dernieresFactures: dernieresFactures.map(f => ({
         id: f.id,
         numero: f.numero,

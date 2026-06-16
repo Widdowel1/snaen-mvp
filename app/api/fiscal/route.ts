@@ -90,13 +90,16 @@ export async function POST(req: NextRequest) {
 
     // Upsert déclaration
     const existing = await prisma.declarationFiscale.findFirst({ where: { operateurId: user.id, periode } })
+    let declarationId: string
+
     if (existing) {
       await prisma.declarationFiscale.update({
         where: { id: existing.id },
         data: { statut: 'PAYEE', datePaiement: now },
       })
+      declarationId = existing.id
     } else {
-      await prisma.declarationFiscale.create({
+      const created = await prisma.declarationFiscale.create({
         data: {
           operateurId: user.id,
           periode,
@@ -113,12 +116,14 @@ export async function POST(req: NextRequest) {
           datePaiement: now,
         },
       })
+      declarationId = created.id
     }
 
     return NextResponse.json({
       success: true,
       message: `Paiement de ${new Intl.NumberFormat('fr-FR').format(fiscal.impotFinal)} FCFA simulé via ${modePaiement}`,
       reference: 'SNAEN-' + Math.random().toString(36).slice(2, 10).toUpperCase(),
+      declarationId,
     })
   } catch (err: any) {
     console.error('[fiscal-post] error:', err)

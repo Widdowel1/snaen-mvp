@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
+import { ToastProvider } from '@/components/ui/Toast'
 
 export default function OperateurLayout({ children }: { children: React.ReactNode }) {
   const { data: session, status } = useSession()
@@ -42,7 +43,9 @@ export default function OperateurLayout({ children }: { children: React.ReactNod
       />
       <main className="lg:ml-64 pt-14 min-h-screen">
         <div className="p-4 lg:p-6">
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </div>
       </main>
     </div>

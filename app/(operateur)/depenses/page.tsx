@@ -56,6 +56,8 @@ export default function DepensesPage() {
   const [fournisseurNom, setFournisseurNom] = useState('')
   const [fournisseurIfu, setFournisseurIfu] = useState('')
   const [justificatifType, setJustificatifType] = useState('')
+  const [justificatifFile, setJustificatifFile] = useState<File | null>(null)
+  const [justificatifPreview, setJustificatifPreview] = useState<string | null>(null)
 
   async function fetchDepenses() {
     setLoading(true)
@@ -72,6 +74,19 @@ export default function DepensesPage() {
 
   useEffect(() => { fetchDepenses() }, [])
 
+  function handleJustificatifChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setJustificatifFile(file)
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader()
+      reader.onload = (ev) => setJustificatifPreview(ev.target?.result as string)
+      reader.readAsDataURL(file)
+    } else {
+      setJustificatifPreview(null)
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
@@ -81,15 +96,22 @@ export default function DepensesPage() {
     }
     setSubmitting(true)
     try {
-      const res = await fetch('/api/depenses', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dateDepense, categorie, description, montant, fournisseurNom, fournisseurIfu, justificatifType }),
-      })
+      const formData = new FormData()
+      formData.append('dateDepense', dateDepense)
+      formData.append('categorie', categorie)
+      formData.append('description', description)
+      formData.append('montant', montant)
+      formData.append('fournisseurNom', fournisseurNom)
+      formData.append('fournisseurIfu', fournisseurIfu)
+      formData.append('justificatifType', justificatifType)
+      if (justificatifFile) formData.append('justificatif', justificatifFile)
+
+      const res = await fetch('/api/depenses', { method: 'POST', body: formData })
       const data = await res.json()
       if (data.success) {
         setShowForm(false)
         setCategorie(''); setMontant(''); setDescription(''); setFournisseurNom(''); setFournisseurIfu(''); setJustificatifType('')
+        setJustificatifFile(null); setJustificatifPreview(null)
         fetchDepenses()
       } else {
         setError(data.error || 'Erreur lors de l\'ajout.')
@@ -195,6 +217,28 @@ export default function DepensesPage() {
                   {JUSTIFICATIFS.map(j => <option key={j.value} value={j.value}>{j.label}</option>)}
                 </select>
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Justificatif (photo ou PDF)</label>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  onChange={handleJustificatifChange}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#006B3F] file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:bg-[#E8F5EE] file:text-[#006B3F] file:text-xs file:font-medium"
+                />
+                {justificatifPreview && (
+                  <div className="mt-2">
+                    <img src={justificatifPreview} alt="Aperçu" className="max-h-32 rounded-lg border border-gray-200 object-cover" />
+                  </div>
+                )}
+                {justificatifFile && !justificatifPreview && (
+                  <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                    <svg className="w-4 h-4 text-[#006B3F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    {justificatifFile.name}
+                  </div>
+                )}
+              </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)}
                   className="flex-1 border border-gray-300 text-gray-600 rounded-xl py-2.5 text-sm font-semibold hover:bg-gray-50">
@@ -230,6 +274,7 @@ export default function DepensesPage() {
                 <th className="px-6 py-3 font-medium">Description</th>
                 <th className="px-6 py-3 font-medium">Montant</th>
                 <th className="px-6 py-3 font-medium">Statut</th>
+                <th className="px-6 py-3 font-medium">Justificatif</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -245,6 +290,22 @@ export default function DepensesPage() {
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUT_COLORS[d.statutValidation] || 'bg-gray-100 text-gray-600'}`}>
                       {STATUT_LABELS[d.statutValidation] || d.statutValidation}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    {d.justificatifUrl ? (
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[#E8F5EE] text-[#006B3F] border border-[#006B3F]/20">
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Justificatif joint
+                        </span>
+                        <a href={d.justificatifUrl} target="_blank" rel="noopener noreferrer"
+                          className="text-xs text-[#006B3F] hover:underline font-medium">Voir</a>
+                      </div>
+                    ) : (
+                      <span className="text-gray-300 text-xs">—</span>
+                    )}
                   </td>
                 </tr>
               ))}
