@@ -2,20 +2,18 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { signOut } from 'next-auth/react'
 
 const NIVEAUX_LABELS: Record<string, string> = {
   STARTER: 'Starter', BUILDER: 'Builder', ACHIEVER: 'Achiever',
   CHAMPION: 'Champion', ELITE: 'Elite',
 }
 
-const NIVEAUX_COLORS: Record<string, string> = {
-  STARTER: 'bg-gray-400', BUILDER: 'bg-blue-500', ACHIEVER: 'bg-purple-500',
-  CHAMPION: 'bg-[#FCD116] text-[#004D2C]', ELITE: 'bg-[#E8112D]',
-}
-
 interface SidebarProps {
   userName?: string
   niveau?: string
+  open?: boolean
+  onClose?: () => void
 }
 
 const navItems = [
@@ -51,13 +49,13 @@ const navItems = [
   )},
 ]
 
-export default function Sidebar({ userName, niveau = 'STARTER' }: SidebarProps) {
+export default function Sidebar({ userName, niveau = 'STARTER', open = false, onClose }: SidebarProps) {
   const pathname = usePathname()
 
-  return (
-    <aside className="fixed left-0 top-0 h-full w-64 flex flex-col z-30" style={{ background: '#004D2C' }}>
+  const SidebarContent = () => (
+    <aside className="h-full w-64 flex flex-col" style={{ background: '#004D2C' }}>
       {/* Logo */}
-      <div className="px-6 py-5 border-b border-white/10">
+      <div className="px-6 py-5 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <svg width="36" height="36" viewBox="0 0 56 56" fill="none">
             <rect width="56" height="56" rx="10" fill="#006B3F"/>
@@ -69,6 +67,14 @@ export default function Sidebar({ userName, niveau = 'STARTER' }: SidebarProps) 
             <div className="text-white/60 text-xs">DNEN · Bénin</div>
           </div>
         </div>
+        {/* Bouton fermer sur mobile */}
+        {onClose && (
+          <button onClick={onClose} className="lg:hidden text-white/60 hover:text-white p-1">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -79,7 +85,8 @@ export default function Sidebar({ userName, niveau = 'STARTER' }: SidebarProps) 
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              onClick={onClose}
+              className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors ${
                 active
                   ? 'text-[#FCD116] border-l-2 border-[#FCD116] pl-2.5'
                   : 'text-white/75 hover:text-white hover:bg-white/10'
@@ -93,25 +100,45 @@ export default function Sidebar({ userName, niveau = 'STARTER' }: SidebarProps) 
         })}
       </nav>
 
-      {/* Badge niveau */}
-      <div className="px-4 py-4 border-t border-white/10">
+      {/* Badge niveau + déconnexion */}
+      <div className="px-4 py-4 border-t border-white/10 space-y-3">
         <div className="bg-white/5 rounded-xl p-3">
-          <div className="flex items-center gap-2 mb-2">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${NIVEAUX_COLORS[niveau] || 'bg-gray-400'} ${niveau === 'CHAMPION' ? '' : 'text-white'}`}>
-              {NIVEAUX_LABELS[niveau] || niveau}
-            </span>
-          </div>
-          {userName && (
-            <div className="text-white/80 text-xs truncate">{userName}</div>
-          )}
-          <div className="mt-2">
-            <div className="h-1 bg-white/20 rounded-full">
-              <div className="h-1 bg-[#FCD116] rounded-full" style={{ width: '45%' }} />
-            </div>
-            <div className="text-white/40 text-xs mt-1">45% vers le niveau suivant</div>
-          </div>
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-blue-500 text-white mb-1">
+            {NIVEAUX_LABELS[niveau] || niveau}
+          </span>
+          {userName && <div className="text-white/80 text-xs truncate mt-1">{userName}</div>}
         </div>
+        <button
+          onClick={() => signOut({ callbackUrl: '/login' })}
+          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-white/60 hover:text-white hover:bg-white/10 text-sm transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          Déconnexion
+        </button>
       </div>
     </aside>
+  )
+
+  return (
+    <>
+      {/* Desktop : sidebar fixe */}
+      <div className="hidden lg:block fixed left-0 top-0 h-full w-64 z-30">
+        <SidebarContent />
+      </div>
+
+      {/* Mobile : slide-in avec overlay */}
+      {open && (
+        <div className="lg:hidden fixed inset-0 z-40 flex">
+          {/* Overlay */}
+          <div className="fixed inset-0 bg-black/50" onClick={onClose} />
+          {/* Sidebar */}
+          <div className="relative z-50 w-64 flex-shrink-0">
+            <SidebarContent />
+          </div>
+        </div>
+      )}
+    </>
   )
 }
