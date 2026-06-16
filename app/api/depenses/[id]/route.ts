@@ -5,13 +5,14 @@ import prisma from '@/lib/prisma'
 import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
   const user = session.user as any
 
   try {
-    const existing = await prisma.depense.findUnique({ where: { id: params.id } })
+    const existing = await prisma.depense.findUnique({ where: { id: id } })
     if (!existing) return NextResponse.json({ error: 'Dépense introuvable' }, { status: 404 })
     if (existing.operateurId !== user.id) return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
 
@@ -60,7 +61,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     const statutValidation = (categorie && autoValidees.includes(categorie)) ? 'AUTO_VALIDEE' : 'EN_ATTENTE'
 
     const updated = await prisma.depense.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         dateDepense: dateDepense ? new Date(dateDepense) : existing.dateDepense,
         categorie: (categorie || existing.categorie) as any,
