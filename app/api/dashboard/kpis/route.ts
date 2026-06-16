@@ -97,16 +97,37 @@ export async function GET(req: NextRequest) {
     ])
     const totalDepensesCount = await prisma.depense.count({ where: { operateurId } })
 
-    // Alertes
-    const alertes = []
-    const declarationsEnRetard = await prisma.declarationFiscale.findMany({
-      where: { operateurId, statut: 'EN_RETARD' },
+    // Alertes intelligentes
+    const alertes: { type: string; message: string }[] = []
+
+    const periodeActuelle = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const declarationActuelle = await prisma.declarationFiscale.findFirst({
+      where: { operateurId, periode: periodeActuelle },
     })
-    if (declarationsEnRetard.length > 0) {
-      alertes.push({ type: 'warning', message: `${declarationsEnRetard.length} déclaration(s) fiscale(s) en retard` })
+    const joursAvantLimite = Math.ceil((dateLimite.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+
+    // Déclaration mois courant non payée
+    if (!declarationActuelle || declarationActuelle.statut !== 'PAYEE') {
+      if (joursAvantLimite < 0) {
+        alertes.push({ type: 'danger', message: `🚨 Déclaration fiscale de ${new Date(now.getFullYear(), now.getMonth(), 1).toLocaleString('fr-FR', { month: 'long', year: 'numeric' })} EN RETARD de ${Math.abs(joursAvantLimite)} jour(s). Des pénalités peuvent s'appliquer.` })
+      } else if (joursAvantLimite <= 5) {
+        alertes.push({ type: 'warning', message: `⚠️ Votre déclaration fiscale est due dans ${joursAvantLimite} jour(s). Date limite : ${dateLimite.toLocaleDateString('fr-FR')}. Payez maintenant dans l'onglet Fiscal.` })
+      }
     }
-    if (caMoisCourant === 0) {
-      alertes.push({ type: 'info', message: 'Aucune facture émise ce mois-ci' })
+
+    // Anciennes déclarations en retard
+    const declarationsAnciennes = await prisma.declarationFiscale.findMany({
+      where: { operateurId, statut: { in: ['CALCULEE', 'EN_RETARD'] }, dateLimite: { lt: now } },
+      orderBy: { periode: 'desc' },
+      take: 1,
+    })
+    if (declarationsAnciennes.length > 0) {
+      const d = declarationsAnciennes[0]
+      alertes.push({ type: 'danger', message: `🚨 Déclaration de la période ${d.periode} non réglée et en retard. Risque de pénalités.` })
+    }
+
+    if (facturesMoisCourant.length === 0) {
+      alertes.push({ type: 'info', message: `💡 Vous n'avez pas encore émis de facture ce mois-ci. Créez votre première facture pour alimenter votre déclaration fiscale.` })
     }
 
     // Si aucune donnée ce mois-ci, utiliser les données du mois précédent pour avoir quelque chose à afficher
