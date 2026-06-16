@@ -3,15 +3,12 @@ import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import ContextGuide from '@/components/ui/ContextGuide'
+import FormationCard from './FormationModal'
 
 const NIVEAUX_ORDER = ['STARTER', 'BUILDER', 'ACHIEVER', 'CHAMPION', 'ELITE']
 
 function niveauIndex(n: string) {
   return NIVEAUX_ORDER.indexOf(n)
-}
-
-const FORMAT_ICONS: Record<string, string> = {
-  video: '🎬', pdf: '📄', live: '🔴', quiz: '📝', default: '📚',
 }
 
 export default async function AcademiePage() {
@@ -67,70 +64,23 @@ export default async function AcademiePage() {
             const progression = operateur?.progressions.find(p => p.formationId === formation.id)
             const pct = progression?.progressionPct || 0
             const termine = progression?.termine || false
-            const formatIcon = FORMAT_ICONS[formation.format?.toLowerCase()] || FORMAT_ICONS.default
 
             return (
-              <div key={formation.id}
-                className={`bg-white rounded-2xl border shadow-sm overflow-hidden transition-all ${
-                  locked ? 'border-gray-100 opacity-60' : 'border-gray-100 hover:border-[#006B3F]/30 hover:shadow-md'
-                }`}>
-                {/* Header */}
-                <div className={`p-4 ${locked ? 'bg-gray-50' : 'bg-[#E8F5EE]'}`}>
-                  <div className="flex items-start justify-between">
-                    <div className="text-2xl">{formatIcon}</div>
-                    <div className="flex gap-1.5">
-                      {termine && (
-                        <span className="bg-green-100 text-green-700 text-xs font-medium px-2 py-0.5 rounded-full">✓ Terminé</span>
-                      )}
-                      {locked && (
-                        <span className="bg-gray-200 text-gray-500 text-xs font-medium px-2 py-0.5 rounded-full">🔒 {formation.niveauMin}</span>
-                      )}
-                      {formation.gratuit && !locked && (
-                        <span className="bg-[#006B3F] text-white text-xs font-medium px-2 py-0.5 rounded-full">Gratuit</span>
-                      )}
-                    </div>
-                  </div>
-                  <h3 className={`font-bold mt-2 text-sm leading-snug ${locked ? 'text-gray-400' : 'text-[#004D2C]'}`}>
-                    {formation.titre}
-                  </h3>
-                </div>
-
-                <div className="p-4">
-                  {formation.description && (
-                    <p className="text-gray-500 text-xs mb-3 line-clamp-2">{formation.description}</p>
-                  )}
-                  <div className="flex items-center gap-3 text-xs text-gray-400 mb-3">
-                    <span>⏱ {formation.dureeMin} min</span>
-                    <span className="capitalize">{formation.format}</span>
-                  </div>
-
-                  {!locked && (
-                    <div>
-                      <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                        <span>Progression</span>
-                        <span className="font-medium">{pct}%</span>
-                      </div>
-                      <div className="h-1.5 bg-gray-100 rounded-full">
-                        <div className="h-1.5 bg-[#006B3F] rounded-full transition-all" style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
-                  )}
-
-                  {locked ? (
-                    <div className="mt-3 text-center text-xs text-gray-400">
-                      Disponible à partir du niveau {formation.niveauMin}
-                    </div>
-                  ) : (
-                    <button className={`mt-3 w-full rounded-lg py-2 text-sm font-semibold transition-colors ${
-                      termine
-                        ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                        : 'bg-[#006B3F] hover:bg-[#004D2C] text-white'
-                    }`}>
-                      {termine ? 'Revoir la formation' : pct > 0 ? 'Continuer' : 'Commencer'}
-                    </button>
-                  )}
-                </div>
-              </div>
+              <FormationCard
+                key={formation.id}
+                formation={{
+                  id: formation.id,
+                  titre: formation.titre,
+                  description: formation.description,
+                  format: formation.format,
+                  dureeMin: formation.dureeMin,
+                  niveauMin: formation.niveauMin,
+                  gratuit: formation.gratuit,
+                }}
+                locked={locked}
+                pct={pct}
+                termine={termine}
+              />
             )
           })}
         </div>
