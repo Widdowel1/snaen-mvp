@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import ContextGuide from '@/components/ui/ContextGuide'
 
 function formatFCFA(n: number) {
   return new Intl.NumberFormat('fr-FR').format(Math.round(n)) + ' FCFA'
@@ -60,6 +61,8 @@ export default function DashboardPage() {
         <h1 className="text-[#004D2C] font-bold text-2xl">Tableau de bord</h1>
         <p className="text-gray-500 text-sm mt-1">Vue d'ensemble de votre activité numérique</p>
       </div>
+
+      <ContextGuide message="Votre tableau de bord affiche vos KPIs en temps réel. Cliquez sur une carte pour plus de détails." />
 
       {/* Alertes */}
       {data?.alertes?.length > 0 && (

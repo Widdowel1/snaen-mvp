@@ -2,6 +2,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/prisma'
 import { redirect } from 'next/navigation'
+import ContextGuide from '@/components/ui/ContextGuide'
 
 const NIVEAUX_ORDER = ['STARTER', 'BUILDER', 'ACHIEVER', 'CHAMPION', 'ELITE']
 
@@ -36,6 +37,8 @@ export default async function AcademiePage() {
         <h1 className="text-[#004D2C] font-bold text-2xl">Académie SNAEN</h1>
         <p className="text-gray-500 text-sm mt-0.5">Formations certifiantes pour booster votre activité numérique</p>
       </div>
+
+      <ContextGuide message="Complétez les formations pour augmenter votre niveau et bénéficier de réductions fiscales." />
 
       {/* Badge niveau */}
       <div className="bg-gradient-to-r from-[#004D2C] to-[#006B3F] rounded-2xl p-5 text-white">
