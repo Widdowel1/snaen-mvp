@@ -47,12 +47,12 @@ async function main() {
 
   // Admin démo
   await prisma.operateur.upsert({
-    where: { email: 'admin@cnaen.bj' },
+    where: { email: 'admin@dnen.bj' },
     update: {},
     create: {
       nom: 'ADMIN',
-      prenom: 'CNAEN',
-      email: 'admin@cnaen.bj',
+      prenom: 'DNEN',
+      email: 'admin@dnen.bj',
       telephone: '+22990000001',
       motDePasse: hashAdmin,
       secteur: 'AUTRE',
@@ -311,7 +311,7 @@ async function main() {
 
   console.log('✅ Seed terminé avec succès!')
   console.log('  📧 Opérateur: demo@snaen.bj / Demo1234!')
-  console.log('  📧 Admin: admin@cnaen.bj / Admin1234!')
+  console.log('  📧 Admin: admin@dnen.bj / Admin1234!')
 }
 
 main()

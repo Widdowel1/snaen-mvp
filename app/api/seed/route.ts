@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
       where: { email: 'admin@cnaen.bj' },
       update: {},
       create: {
-        nom: 'ADMIN', prenom: 'CNAEN', email: 'admin@cnaen.bj',
+        nom: 'ADMIN', prenom: 'DNEN', email: 'admin@dnen.bj',
         telephone: '+22990000001', motDePasse: hashAdmin,
         secteur: 'AUTRE', niveau: 'ELITE', statut: 'ACTIF',
         scoreConformite: 100, role: 'ADMIN', dateInscription: new Date('2024-01-01'),

@@ -31,7 +31,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               <text x="10" y="42" fontFamily="Inter, Arial" fontWeight="400" fontSize="9" fill="#ffffff">Bénin</text>
             </svg>
             <div>
-              <div className="text-white font-bold text-sm">CNAEN</div>
+              <div className="text-white font-bold text-sm">DNEN</div>
               <div className="text-white/50 text-xs">Admin</div>
             </div>
           </div>
@@ -47,7 +47,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </nav>
         <div className="px-4 py-4 border-t border-white/10">
           <div className="text-white/60 text-xs truncate">{user?.name || user?.email}</div>
-          <div className="text-[#FCD116] text-xs font-medium">Administrateur CNAEN</div>
+          <div className="text-[#FCD116] text-xs font-medium">Administrateur DNEN</div>
         </div>
       </aside>
 

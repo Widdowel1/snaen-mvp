@@ -59,7 +59,7 @@ export default async function AdminDashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-gray-900 font-bold text-2xl">Tableau de bord CNAEN</h1>
+        <h1 className="text-gray-900 font-bold text-2xl">Tableau de bord DNEN</h1>
         <p className="text-gray-500 text-sm mt-0.5">Centre National d'Administration de l'Économie Numérique</p>
       </div>
 
