@@ -47,6 +47,7 @@ export async function GET(req: NextRequest) {
         statut: declaration?.statut || (i === 0 ? 'CALCULEE' : caTotal > 0 ? 'PAYEE' : 'CALCULEE'),
         dateLimite: new Date(debut.getFullYear(), debut.getMonth() + 2, 15).toISOString(),
         datePaiement: declaration?.datePaiement?.toISOString() || null,
+        declarationId: declaration?.id || null,
       })
     }
 

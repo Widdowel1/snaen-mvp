@@ -16,6 +16,22 @@ function StatutBadge({ statut }: { statut: string }) {
   return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${c[statut] || 'bg-gray-100'}`}>{l[statut] || statut}</span>
 }
 
+function AttestationButton({ declarationId }: { declarationId: string }) {
+  return (
+    <a
+      href={`/api/fiscal/attestation/${declarationId}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1.5 bg-[#E8F5EE] hover:bg-[#006B3F] text-[#006B3F] hover:text-white border border-[#006B3F]/30 hover:border-[#006B3F] rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors whitespace-nowrap"
+    >
+      <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      Attestation
+    </a>
+  )
+}
+
 export default function FiscalPage() {
   const [data, setData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -66,7 +82,9 @@ export default function FiscalPage() {
   if (loading) return <div className="flex items-center justify-center h-64 text-gray-400 text-sm">Chargement...</div>
 
   const moisCourant = data?.historique?.[0]
-  const historiquePasse = data?.historique?.slice(1) || []
+  const isPaye = moisCourant?.statut === 'PAYEE'
+  // Use the declarationId from post-payment state first, then from API (for already-paid months)
+  const currentDeclarationId = paidDeclarationId || (isPaye ? moisCourant?.declarationId : null)
 
   return (
     <div className="space-y-6">
@@ -125,16 +143,21 @@ export default function FiscalPage() {
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-between">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <div className="text-xs text-gray-400">
               Date limite : <span className="font-medium">{new Date(moisCourant.dateLimite).toLocaleDateString('fr-FR')}</span>
             </div>
-            {moisCourant.statut !== 'PAYEE' && (
-              <button onClick={() => setShowModal(true)}
-                className="bg-[#006B3F] hover:bg-[#004D2C] text-white font-semibold rounded-xl px-5 py-2.5 text-sm transition-colors">
-                Payer maintenant
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {currentDeclarationId && (
+                <AttestationButton declarationId={currentDeclarationId} />
+              )}
+              {!isPaye && (
+                <button onClick={() => { setPayResult(null); setModePaiement(''); setShowModal(true) }}
+                  className="bg-[#006B3F] hover:bg-[#004D2C] text-white font-semibold rounded-xl px-5 py-2.5 text-sm transition-colors">
+                  Payer maintenant
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -142,7 +165,38 @@ export default function FiscalPage() {
       {/* Historique */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
         <h2 className="text-[#004D2C] font-semibold mb-4">Historique des 6 derniers mois</h2>
-        <div className="overflow-x-auto">
+
+        {/* Mobile: cards */}
+        <div className="lg:hidden space-y-3">
+          {(data?.historique || []).map((h: any, i: number) => (
+            <div key={h.periode} className={`rounded-xl border p-4 space-y-2 ${i === 0 ? 'border-[#006B3F]/30 bg-[#E8F5EE]/40' : 'border-gray-100'}`}>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-semibold text-gray-800 capitalize">{h.label}</span>
+                <StatutBadge statut={h.statut} />
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">CA</span>
+                <span className="font-medium">{formatFCFA(h.caTotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Bénéfice net</span>
+                <span className="font-medium text-[#006B3F]">{formatFCFA(h.beneficeNet)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-sm text-gray-500">Impôt : </span>
+                  <span className="text-sm font-bold text-[#E8112D]">{formatFCFA(h.impotFinal)}</span>
+                </div>
+                {h.statut === 'PAYEE' && h.declarationId && (
+                  <AttestationButton declarationId={h.declarationId} />
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full">
             <thead className="text-left text-xs text-gray-400 uppercase tracking-wide border-b border-gray-100">
               <tr>
@@ -151,6 +205,7 @@ export default function FiscalPage() {
                 <th className="pb-3 font-medium">Bénéfice</th>
                 <th className="pb-3 font-medium">Impôt</th>
                 <th className="pb-3 font-medium">Statut</th>
+                <th className="pb-3 font-medium">Attestation</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -161,6 +216,13 @@ export default function FiscalPage() {
                   <td className="py-3 text-sm text-[#006B3F]">{formatFCFA(h.beneficeNet)}</td>
                   <td className="py-3 text-sm font-bold text-[#E8112D]">{formatFCFA(h.impotFinal)}</td>
                   <td className="py-3"><StatutBadge statut={h.statut} /></td>
+                  <td className="py-3">
+                    {h.statut === 'PAYEE' && h.declarationId ? (
+                      <AttestationButton declarationId={h.declarationId} />
+                    ) : (
+                      <span className="text-gray-300 text-xs">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -202,7 +264,7 @@ export default function FiscalPage() {
                     Télécharger l&apos;attestation fiscale
                   </a>
                 )}
-                <button onClick={() => { setShowModal(false); setPayResult(null); setModePaiement(''); setPaidDeclarationId(null) }}
+                <button onClick={() => { setShowModal(false); setPayResult(null); setModePaiement('') }}
                   className="w-full text-gray-400 text-sm hover:text-gray-600 hover:underline">
                   Fermer
                 </button>

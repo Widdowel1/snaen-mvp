@@ -21,6 +21,22 @@ function StatutBadge({ statut }: { statut: string }) {
   )
 }
 
+function PdfButton({ id }: { id: string }) {
+  return (
+    <a
+      href={`/api/factures/${id}/pdf`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1.5 bg-[#E8F5EE] hover:bg-[#006B3F] text-[#006B3F] hover:text-white border border-[#006B3F]/30 hover:border-[#006B3F] rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors"
+    >
+      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      PDF
+    </a>
+  )
+}
+
 export default function FacturesPage() {
   const [factures, setFactures] = useState<any[]>([])
   const [total, setTotal] = useState(0)
@@ -60,20 +76,21 @@ export default function FacturesPage() {
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Nouvelle facture
+          <span className="hidden sm:inline">Nouvelle facture</span>
+          <span className="sm:hidden">Nouvelle</span>
         </Link>
       </div>
 
       {/* Stats rapides */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-3 gap-3">
         {[
           { label: 'Total émises', value: factures.filter(f => f.statut === 'EMISE').length, color: 'text-blue-700' },
           { label: 'Payées', value: factures.filter(f => f.statut === 'PAYEE').length, color: 'text-green-700' },
           { label: 'CA TTC', value: formatFCFA(caTTC), color: 'text-[#004D2C]' },
         ].map((s, i) => (
-          <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
-            <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
-            <div className="text-xs text-gray-400 mt-0.5">{s.label}</div>
+          <div key={i} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center">
+            <div className={`text-lg font-bold ${s.color}`}>{s.value}</div>
+            <div className="text-xs text-gray-400 mt-0.5 leading-tight">{s.label}</div>
           </div>
         ))}
       </div>
@@ -86,9 +103,7 @@ export default function FacturesPage() {
               key={s}
               onClick={() => setStatut(s)}
               className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                statut === s
-                  ? 'bg-[#006B3F] text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                statut === s ? 'bg-[#006B3F] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
             >
               {s === 'TOUS' ? 'Toutes' : s === 'EMISE' ? 'Émises' : s === 'PAYEE' ? 'Payées' : 'Annulées'}
@@ -97,7 +112,7 @@ export default function FacturesPage() {
         </div>
       </div>
 
-      {/* Table */}
+      {/* Liste */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {loading ? (
           <div className="p-12 text-center text-gray-400 text-sm">Chargement...</div>
@@ -114,49 +129,66 @@ export default function FacturesPage() {
             </Link>
           </div>
         ) : (
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-100">
-              <tr className="text-left text-xs text-gray-400 uppercase tracking-wide">
-                <th className="px-6 py-3 font-medium">Numéro</th>
-                <th className="px-6 py-3 font-medium">Client</th>
-                <th className="px-6 py-3 font-medium">Montant TTC</th>
-                <th className="px-6 py-3 font-medium">Statut</th>
-                <th className="px-6 py-3 font-medium">Date émission</th>
-                <th className="px-6 py-3 font-medium">Échéance</th>
-                <th className="px-6 py-3 font-medium">PDF</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
+          <>
+            {/* Mobile: cards */}
+            <div className="lg:hidden divide-y divide-gray-50">
               {factures.map(f => (
-                <tr key={f.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 font-mono text-sm text-gray-500">{f.numero}</td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-800">{f.clientNom}</div>
-                    {f.clientEmail && <div className="text-xs text-gray-400">{f.clientEmail}</div>}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-bold text-[#004D2C]">{formatFCFA(f.montantTTC)}</td>
-                  <td className="px-6 py-4"><StatutBadge statut={f.statut} /></td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{new Date(f.dateEmission).toLocaleDateString('fr-FR')}</td>
-                  <td className="px-6 py-4 text-sm text-gray-400">
-                    {f.dateEcheance ? new Date(f.dateEcheance).toLocaleDateString('fr-FR') : '—'}
-                  </td>
-                  <td className="px-6 py-4">
-                    <a
-                      href={`/api/factures/${f.id}/pdf`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 bg-[#E8F5EE] hover:bg-[#006B3F] text-[#006B3F] hover:text-white border border-[#006B3F]/30 hover:border-[#006B3F] rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      PDF
-                    </a>
-                  </td>
-                </tr>
+                <div key={f.id} className="p-4 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-semibold text-gray-800 truncate">{f.clientNom}</div>
+                      {f.clientEmail && <div className="text-xs text-gray-400 truncate">{f.clientEmail}</div>}
+                      <div className="font-mono text-xs text-gray-400 mt-0.5">{f.numero}</div>
+                    </div>
+                    <StatutBadge statut={f.statut} />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-lg font-bold text-[#004D2C]">{formatFCFA(f.montantTTC)}</div>
+                      <div className="text-xs text-gray-400">
+                        Émise le {new Date(f.dateEmission).toLocaleDateString('fr-FR')}
+                        {f.dateEcheance && ` · Échéance ${new Date(f.dateEcheance).toLocaleDateString('fr-FR')}`}
+                      </div>
+                    </div>
+                    <PdfButton id={f.id} />
+                  </div>
+                </div>
               ))}
-            </tbody>
-          </table>
+            </div>
+
+            {/* Desktop: table */}
+            <table className="hidden lg:table w-full">
+              <thead className="bg-gray-50 border-b border-gray-100">
+                <tr className="text-left text-xs text-gray-400 uppercase tracking-wide">
+                  <th className="px-6 py-3 font-medium">Numéro</th>
+                  <th className="px-6 py-3 font-medium">Client</th>
+                  <th className="px-6 py-3 font-medium">Montant TTC</th>
+                  <th className="px-6 py-3 font-medium">Statut</th>
+                  <th className="px-6 py-3 font-medium">Date émission</th>
+                  <th className="px-6 py-3 font-medium">Échéance</th>
+                  <th className="px-6 py-3 font-medium">PDF</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {factures.map(f => (
+                  <tr key={f.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 font-mono text-sm text-gray-500">{f.numero}</td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-gray-800">{f.clientNom}</div>
+                      {f.clientEmail && <div className="text-xs text-gray-400">{f.clientEmail}</div>}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-bold text-[#004D2C]">{formatFCFA(f.montantTTC)}</td>
+                    <td className="px-6 py-4"><StatutBadge statut={f.statut} /></td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{new Date(f.dateEmission).toLocaleDateString('fr-FR')}</td>
+                    <td className="px-6 py-4 text-sm text-gray-400">
+                      {f.dateEcheance ? new Date(f.dateEcheance).toLocaleDateString('fr-FR') : '—'}
+                    </td>
+                    <td className="px-6 py-4"><PdfButton id={f.id} /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         )}
       </div>
     </div>
